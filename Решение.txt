@@ -1,0 +1,38 @@
+1. Схема приведена в виде картинки PUML
+
+2.
+-- Проверка факта утраты книги пользователями с определенным ФИО
+WITH lost_qty AS (
+	SELECT lost.client_id, COUNT(lost.book_id) AS qty 
+	FROM lost
+	WHERE lost.client_id IN (SELECT clients.id FROM clients WHERE clients."ФИО" LIKE '%Петр%')
+	GROUP BY lost.client_id),
+lost_full AS (
+	SELECT l.client_id, l.qty, c."ФИО", c."Билет" 
+	FROM lost_qty AS l
+	INNER JOIN clients AS c ON c.id = l.client_id)
+SELECT "ФИО", "Билет", CASE
+		WHEN qty > 0 THEN 'Терял книги'
+		ELSE 'Не терял'
+		END AS "Факт потери"
+FROM lost_full
+
+3.
+-- Здесь только обновление количества книг так как в задании указано написать скрипт на обновление соответствующей информации
+-- скрипт на добавление записи о потере по отдельному заданию )))
+
+UPDATE bookserie 
+SET "Количество" = "Количество" - 1
+WHERE ID = '2' -- Здесь нужно указать ID книги
+
+4. 
+
+WITH traty AS (
+SELECT l."Утеряна" AS lost_date, b."Цена"  AS cena
+FROM lost AS l
+INNER JOIN bookserie AS b ON l.book_id = b.id
+WHERE EXTRACT (YEAR FROM l."Утеряна") = EXTRACT (YEAR FROM current_date)
+)
+SELECT extract(quarter from lost_date) as quart, SUM (cena)
+FROM traty
+GROUP BY quart
